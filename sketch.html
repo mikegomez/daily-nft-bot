@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Daily NFT Sketch</title>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
+    <style>
+      body { margin: 0; padding: 0; }
+      canvas { display: block; }
+    </style>
+  </head>
+  <body>
+    <script>
+      let frameNumber = 0;
+
+      function setup() {
+        createCanvas(1000, 1000);
+        noLoop();
+        const urlParams = new URLSearchParams(window.location.search);
+        frameNumber = int(urlParams.get('frame') || 0);
+      }
+
+      // function draw() {
+      //   background(255);
+      //   // Here, use frameNumber to change drawing
+      //   // Example: color hue based on frameNumber
+      //   for (let i = 0; i < 1400; i++) {
+      //     fill((frameNumber*10 + random(100)) % 255, random(15), random(55), 200);
+      //     ellipse(random(width), random(height), random(20, 100));
+      //   }
+      // }
+
+      function draw() {
+  background(255);
+  
+  // Generate a seed based on today's date (YYYY-MM-DD)
+  const today = new Date().toISOString().slice(0,10);
+  let seed = 0;
+  for (let i = 0; i < today.length; i++) {
+    seed += today.charCodeAt(i);
+  }
+  // randomSeed(seed + frameNumber); // Add frameNumber so each frame differs, but stays deterministic
+
+  // for (let i = 0; i < 2000; i++) {
+  //   fill((frameNumber*10 + random(100)) % 255, random(15), random(55), 200);
+  //   ellipse(random(width), random(height), random(20, 100));+
+  // Instead of randomSeed(seed + frameNumber)
+  // use smoother change:
+  randomSeed(seed);
+  
+  for (let i = 0; i < 2400; i++) {
+    let x = noise(frameNumber * 0.1 + i) * width;
+    let y = noise(frameNumber * 0.1 + i + 1000) * height;
+    let size = noise(frameNumber * 0.1 + i + 2000) * 80 + 20;
+    fill((frameNumber*10 + random(100)) % 255, random(15), random(55), 200);
+    ellipse(x, y, size);
+  }
+}
+
+    </script>
+  </body>
+</html>
