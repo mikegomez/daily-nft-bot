@@ -2,9 +2,14 @@ const fs = require('fs');
 const axios = require('axios');
 const FormData = require('form-data');
 
+require('dotenv').config();
+
+const PINATA_API_KEY = process.env.PINATA_API_KEY;
+const PINATA_SECRET_API_KEY = process.env.PINATA_SECRET_API_KEY;
+
 // Replace with your real keys:
-const PINATA_API_KEY = 'e904e9864a4a515102e5';  // before the dot
-const PINATA_SECRET_API_KEY = 'bf4210fc9119c50f522c9bfa84d44bf5db84506a215568a4fadb8f5a52f9acd4';  // after the dot
+// const PINATA_API_KEY = '';  // before the dot
+// const PINATA_SECRET_API_KEY = '';  // after the dot
 
 async function uploadToPinata() {
   try {
