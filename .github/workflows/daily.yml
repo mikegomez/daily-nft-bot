@@ -1,0 +1,29 @@
+name: Daily NFT Bot
+
+on:
+  schedule:
+    - cron: '0 15 * * *'   # runs every day at 15:00 UTC (~10 AM Eastern, 7 AM Pacific)
+  workflow_dispatch:       # allow manual trigger too
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      PINATA_API_KEY: ${{ secrets.PINATA_API_KEY }}
+      PINATA_SECRET_API_KEY: ${{ secrets.PINATA_SECRET_API_KEY }}
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run daily bot
+      run: node upload_to_pinata.js
