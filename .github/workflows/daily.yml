@@ -2,28 +2,36 @@ name: Daily NFT Bot
 
 on:
   schedule:
-    - cron: '0 15 * * *'   # runs every day at 15:00 UTC (~10 AM Eastern, 7 AM Pacific)
-  workflow_dispatch:       # allow manual trigger too
+    - cron: '0 10 * * *'   # every day at 10:00 UTC
+  workflow_dispatch:      # allow manual trigger too
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    env:
-      PINATA_API_KEY: ${{ secrets.PINATA_API_KEY }}
-      PINATA_SECRET_API_KEY: ${{ secrets.PINATA_SECRET_API_KEY }}
-
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install dependencies
+        run: npm install
 
-    - name: Run daily bot
-      run: node upload_to_pinata.js
+      - name: Generate today's GIF
+        run: node generate_gif.js
+
+      - name: Upload to Pinata
+        run: node upload_to_pinata.js
+
+      - name: Mint NFT on chain
+        run: node mint_and_list.js
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          RPC_URL: ${{ secrets.RPC_URL }}
+          CONTRACT_ADDRESS: ${{ secrets.CONTRACT_ADDRESS }}
+          PINATA_API_KEY: ${{ secrets.PINATA_API_KEY }}
+          PINATA_SECRET_API_KEY: ${{ secrets.PINATA_SECRET_API_KEY }}
+

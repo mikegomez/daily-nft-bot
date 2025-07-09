@@ -52,7 +52,7 @@
     let x = noise(frameNumber * 0.1 + i) * width;
     let y = noise(frameNumber * 0.1 + i + 1000) * height;
     let size = noise(frameNumber * 0.1 + i + 2000) * 80 + 20;
-    fill((frameNumber*10 + random(100)) % 255, random(15), random(55), 200);
+    fill((frameNumber*10 + random(100)) % 255, random(215), random(255), 200);
     ellipse(x, y, size);
   }
 }
