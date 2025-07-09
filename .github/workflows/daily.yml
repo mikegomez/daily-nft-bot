@@ -1,26 +1,31 @@
 name: Daily NFT Bot
 
 on:
+  workflow_dispatch:
   schedule:
-    - cron: '0 18 * * *'   # every day at 10:00 UTC
-  workflow_dispatch:      # allow manual trigger too
+    - cron: '0 18 * * *'  # runs daily at 18:00 UTC
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install dependencies
+      - name: Install system dependencies for canvas
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcairo2-dev libjpeg-dev libpango1.0-dev libgif-dev build-essential librsvg2-dev
+
+      - name: Install Node.js dependencies
         run: npm install
 
-      - name: Generate today's GIF
+      - name: Run generate script
         run: node generate_gif.js
 
       - name: Upload to Pinata
