@@ -32,7 +32,7 @@ jobs:
         run: node upload_to_pinata.js
 
       - name: Mint NFT on chain
-        run: node mint_and_list.js
+        run: node scripts/mint_and_list.js
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           RPC_URL: ${{ secrets.RPC_URL }}
