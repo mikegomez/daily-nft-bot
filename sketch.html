@@ -48,11 +48,11 @@
   // use smoother change:
   randomSeed(seed);
   
-  for (let i = 0; i < 3000; i++) {
+  for (let i = 0; i < 100; i++) {
     let x = noise(frameNumber * 0.1 + i) * width;
     let y = noise(frameNumber * 0.1 + i + 1000) * height;
     let size = noise(frameNumber * 0.1 + i + 2000) * 80 + 20;
-    fill((frameNumber*10 + random(100)) % 255, random(155), random(255), 200);
+    fill((frameNumber*10 + random(100)) % 255, random(255), random(255), 200);
     ellipse(x, y, size);
   }
 }

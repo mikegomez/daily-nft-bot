@@ -1,7 +1,10 @@
+if (process.env.GITHUB_ACTIONS !== 'true') {
+  require('dotenv').config();
+}
 const fs = require('fs');
 const axios = require('axios');
 const FormData = require('form-data');
-require('dotenv').config();
+//require('dotenv').config();
 
 const PINATA_API_KEY = process.env.PINATA_API_KEY;
 const PINATA_SECRET_API_KEY = process.env.PINATA_SECRET_API_KEY;

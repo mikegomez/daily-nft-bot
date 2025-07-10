@@ -1,4 +1,7 @@
-require('dotenv').config();
+//require('dotenv').config();
+if (process.env.GITHUB_ACTIONS !== 'true') {
+  require('dotenv').config();
+}
 const { ethers } = require('ethers');
 const { uploadTodayGif } = require('../upload_to_pinata.js');
 
