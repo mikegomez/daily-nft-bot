@@ -30,6 +30,9 @@ jobs:
 
       - name: Upload to Pinata
         run: node upload_to_pinata.js
+        env:
+          PINATA_API_KEY: ${{ secrets.PINATA_API_KEY }}
+          PINATA_SECRET_API_KEY: ${{ secrets.PINATA_SECRET_API_KEY }}
 
       - name: Mint NFT on chain
         run: node scripts/mint_and_list.js
