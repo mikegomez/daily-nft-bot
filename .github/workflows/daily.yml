@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: secrets
 
     env:
       PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
@@ -48,3 +49,8 @@ jobs:
           echo "CONTRACT_ADDRESS length: ${#CONTRACT_ADDRESS}"
           echo "PINATA_API_KEY length: ${#PINATA_API_KEY}"
           echo "PINATA_SECRET_API_KEY length: ${#PINATA_SECRET_API_KEY}"
+
+      - name: Print GitHub environment
+        run: | 
+          echo "GITHUB_ENV: $GITHUB_ENVIRONMENT"
+
