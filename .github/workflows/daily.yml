@@ -3,7 +3,7 @@ name: Daily NFT Bot
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 18 * * *'  # runs daily at 18:00 UTC
+    - cron: '0 20 * * *'  # runs daily at 18:00 UTC
 
 jobs:
   build:
