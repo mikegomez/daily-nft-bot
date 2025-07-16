@@ -50,8 +50,8 @@
   
   for (let i = 0; i < 100; i++) {
     let x = noise(frameNumber * 0.1 + i) * width;
-    let y = noise(frameNumber * 0.1 + i + 1000) * height;
-    let size = noise(frameNumber * 0.1 + i + 1000) * 80 + 20;
+    let y = noise(frameNumber * 0.1 + i + 100) * height;
+    let size = noise(frameNumber * 0.1 + i + 500) * 180 + 120;
     fill((frameNumber*10 + random(1100)) % 1255, random(255), random(255), 200);
     ellipse(x, y, size);
   }
