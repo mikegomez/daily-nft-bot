@@ -14,12 +14,24 @@ console.log('CONTRACT_ADDRESS exists:', !!process.env.CONTRACT_ADDRESS);
 
 // Load env vars
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
-const RPC_URL = process.env.RPC_URL;
+const USE_SEPOLIA = (process.env.USE_SEPOLIA || 'false').toLowerCase() === 'true';
 const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS;
+const RPC_URL = USE_SEPOLIA ? process.env.SEPOLIA_RPC_URL : process.env.RPC_URL;
+const NETWORK = USE_SEPOLIA ? 'sepolia' : 'mainnet';
+
+console.log('USE_SEPOLIA:', USE_SEPOLIA);
+console.log('RPC_URL used:', RPC_URL ? RPC_URL.replace(/(https?:\/\/[^@]*@)?(.{0,30}).*/, '$1$2...') : 'none');
+console.log('Network selected:', NETWORK);
 
 // Validate private key before using it
 if (!PRIVATE_KEY) {
     console.error('❌ PRIVATE_KEY is missing from environment variables');
+    process.exit(1);
+}
+
+if (!RPC_URL) {
+    console.error('❌ RPC_URL is missing from environment variables');
+    console.error('Set RPC_URL for mainnet, or USE_SEPOLIA=true with SEPOLIA_RPC_URL for testnet');
     process.exit(1);
 }
 

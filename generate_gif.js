@@ -85,11 +85,15 @@ const path = require('path');
    // await page.waitForTimeout(100); // give p5.js time to draw
 await new Promise(resolve => setTimeout(resolve, 100));
 
-    const buffer = await page.screenshot({ clip: { x:0, y:0, width, height } });
-    const img = await loadImage(buffer);
+    await page.waitForSelector('canvas');
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    const screenshotPath = path.join(outputDir, `frame-${frameNumber}.png`);
+    await page.screenshot({ path: screenshotPath, type: 'png', clip: { x:0, y:0, width, height } });
+    const img = await loadImage(screenshotPath);
 
     ctx.drawImage(img, 0, 0, width, height);
     encoder.addFrame(ctx);
+    fs.unlinkSync(screenshotPath);
   }
 
   encoder.finish();

@@ -2,6 +2,7 @@ if (process.env.GITHUB_ACTIONS !== 'true') {
   require('dotenv').config();
 }
 const fs = require('fs');
+const path = require('path');
 const axios = require('axios');
 const FormData = require('form-data');
 //require('dotenv').config();
@@ -45,8 +46,12 @@ const PINATA_SECRET_API_KEY = process.env.PINATA_SECRET_API_KEY;
 // uploadToPinata();
 async function uploadTodayGif() {
   try {
+    if (!PINATA_API_KEY || !PINATA_SECRET_API_KEY) {
+      throw new Error('PINATA_API_KEY and PINATA_SECRET_API_KEY must be set in the environment');
+    }
+
     const today = new Date().toISOString().slice(0, 10);  // e.g. "2025-07-06"
-    const filePath = `./art/${today}.gif`;
+    const filePath = path.join(__dirname, 'art', `${today}.gif`);
 
     if (!fs.existsSync(filePath)) {
       throw new Error(`❌ File not found: ${filePath}`);
@@ -76,5 +81,10 @@ async function uploadTodayGif() {
   }
 }
 
-// Instead of running here, export:
 module.exports = { uploadTodayGif };
+
+if (require.main === module) {
+  uploadTodayGif()
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1));
+}

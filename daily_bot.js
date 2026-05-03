@@ -1,5 +1,8 @@
 const { exec } = require('child_process');
-const today = new Date().toISOString().slice(0,10);
+
+const root = __dirname;
+const today = new Date().toISOString().slice(0, 10);
+const execOpts = { cwd: root };
 
 async function run() {
   try {
@@ -7,7 +10,7 @@ async function run() {
 
     // run generate_gif.js
     await new Promise((resolve, reject) => {
-      exec('node generate_gif.js', (error, stdout, stderr) => {
+      exec('node generate_gif.js', execOpts, (error, stdout, stderr) => {
         if (error) {
           console.error(`❌ Generation failed: ${error.message}`);
           return reject(error);
@@ -23,7 +26,7 @@ async function run() {
 
     // run upload_to_pinata.js
     await new Promise((resolve, reject) => {
-      exec('node upload_to_pinata.js', (error, stdout, stderr) => {
+      exec('node upload_to_pinata.js', execOpts, (error, stdout, stderr) => {
         if (error) {
           console.error(`❌ Upload failed: ${error.message}`);
           return reject(error);
