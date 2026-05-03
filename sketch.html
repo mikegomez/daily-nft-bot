@@ -12,51 +12,102 @@
   <body>
     <script>
       let frameNumber = 0;
+      let seed = 0;
+      let shapeCount = 0;
+      let speed = 0.5;
+      let shapeType = 'circle';
+      let palette = { bg: '#111', fill: '#fff', accent: '#f00' };
+
+      function parseParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        frameNumber = int(urlParams.get('frame') || 0);
+        seed = int(urlParams.get('seed') || frameNumber * 1000 + 1);
+        shapeCount = int(urlParams.get('shapes') || 12);
+        speed = parseFloat(urlParams.get('speed') || 0.6);
+        shapeType = urlParams.get('type') || 'circle';
+
+        const paletteParam = urlParams.get('palette');
+        if (paletteParam) {
+          try {
+            palette = JSON.parse(decodeURIComponent(paletteParam));
+          } catch (err) {
+            console.warn('Could not parse palette:', err);
+          }
+        }
+      }
 
       function setup() {
         createCanvas(1000, 1000);
         noLoop();
-        const urlParams = new URLSearchParams(window.location.search);
-        frameNumber = int(urlParams.get('frame') || 0);
+        parseParams();
       }
 
-      // function draw() {
-      //   background(255);
-      //   // Here, use frameNumber to change drawing
-      //   // Example: color hue based on frameNumber
-      //   for (let i = 0; i < 1400; i++) {
-      //     fill((frameNumber*10 + random(100)) % 255, random(15), random(55), 200);
-      //     ellipse(random(width), random(height), random(20, 100));
-      //   }
-      // }
-
       function draw() {
-  background(255);
-  
-  // Generate a seed based on today's date (YYYY-MM-DD)
-  const today = new Date().toISOString().slice(0,10);
-  let seed = 0;
-  for (let i = 0; i < today.length; i++) {
-    seed += today.charCodeAt(i);
-  }
-  // randomSeed(seed + frameNumber); // Add frameNumber so each frame differs, but stays deterministic
+        const today = new Date().toISOString().slice(0,10);
+        let daySeed = 0;
+        for (let i = 0; i < today.length; i++) {
+          daySeed += today.charCodeAt(i);
+        }
 
-  // for (let i = 0; i < 2000; i++) {
-  //   fill((frameNumber*10 + random(100)) % 255, random(15), random(55), 200);
-  //   ellipse(random(width), random(height), random(20, 100));+
-  // Instead of randomSeed(seed + frameNumber)
-  // use smoother change:
-  randomSeed(seed);
-  
-  for (let i = 0; i < 100; i++) {
-    let x = noise(frameNumber * 0.1 + i) * width;
-    let y = noise(frameNumber * 0.1 + i + 100) * height;
-    let size = noise(frameNumber * 0.1 + i + 500) * 180 + 120;
-    fill((frameNumber*10 + random(1100)) % 1255, random(255), random(255), 200);
-    ellipse(x, y, size);
-  }
-}
+        randomSeed(seed + daySeed);
+        noiseSeed(seed + daySeed);
+        background(palette.bg);
+        noStroke();
 
+        const mainHue = (daySeed + frameNumber * 27) % 360;
+        const baseAlpha = 180;
+        const variant = shapeType;
+
+        for (let i = 0; i < shapeCount; i++) {
+          const t = i / max(1, shapeCount - 1);
+          const x = noise(frameNumber * speed * 0.12 + i * 0.05) * width;
+          const y = noise(frameNumber * speed * 0.12 + i * 0.05 + 100) * height;
+          const size = map(noise(i * 0.2 + frameNumber * 0.03), 0, 1, 40, 260);
+          const sat = map(noise(i * 0.15 + frameNumber * 0.05), 0, 1, 55, 90);
+          const light = map(noise(i * 0.12 + frameNumber * 0.08), 0, 1, 35, 75);
+          const alpha = baseAlpha - i * (baseAlpha / max(1, shapeCount - 1));
+          const fillColor = color((mainHue + i * 18) % 360, sat, light, alpha);
+          fill(fillColor);
+          stroke(palette.accent);
+          strokeWeight(map(noise(i * 0.18 + frameNumber * 0.07), 0, 1, 1, 6));
+
+          push();
+          translate(x, y);
+          rotate(noise(i * 0.13 + frameNumber * 0.07) * TWO_PI);
+
+          if (variant === 'rect') {
+            rectMode(CENTER);
+            rect(0, 0, size * 1.2, size * 0.8, size * 0.2);
+          } else if (variant === 'triangle') {
+            triangle(
+              -size * 0.55,
+              size * 0.55,
+              0,
+              -size * 0.7,
+              size * 0.55,
+              size * 0.55
+            );
+          } else if (variant === 'line') {
+            strokeWeight(map(noise(i * 0.18 + frameNumber * 0.07), 0, 1, 2, 10));
+            line(-size * 0.8, 0, size * 0.8, 0);
+          } else if (variant === 'arc') {
+            arc(0, 0, size, size, 0, PI + QUARTER_PI, PIE);
+          } else {
+            ellipse(0, 0, size, size);
+          }
+
+          pop();
+        }
+
+        noStroke();
+        fill(palette.fill);
+        for (let j = 0; j < 6; j++) {
+          const cx = noise(frameNumber * 0.1 + j * 0.12) * width;
+          const cy = noise(frameNumber * 0.1 + j * 0.15 + 50) * height;
+          const radius = map(noise(j * 0.1 + frameNumber * 0.05), 0, 1, 25, 70);
+          ellipse(cx, cy, radius, radius);
+        }
+      }
     </script>
   </body>
 </html>
