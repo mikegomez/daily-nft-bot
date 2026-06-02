@@ -1,113 +1,533 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Daily NFT Sketch</title>
-    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
-    <style>
-      body { margin: 0; padding: 0; }
-      canvas { display: block; }
-    </style>
-  </head>
-  <body>
-    <script>
-      let frameNumber = 0;
-      let seed = 0;
-      let shapeCount = 0;
-      let speed = 0.5;
-      let shapeType = 'circle';
-      let palette = { bg: '#111', fill: '#fff', accent: '#f00' };
+<head>
+  <meta charset="UTF-8"/>
+  <title>Daily NFT Sketch</title>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
+  <style>body{margin:0;padding:0;}canvas{display:block;}</style>
+</head>
+<body>
+<script>
+let frameNumber = 0;
+let frameSeed   = 0;
+let dateSeed    = 0;
+let styleIndex  = 0;
+let H1, H2, H3, darkMode;
 
-      function parseParams() {
-        const urlParams = new URLSearchParams(window.location.search);
-        frameNumber = int(urlParams.get('frame') || 0);
-        seed = int(urlParams.get('seed') || frameNumber * 1000 + 1);
-        shapeCount = int(urlParams.get('shapes') || 12);
-        speed = parseFloat(urlParams.get('speed') || 0.6);
-        shapeType = urlParams.get('type') || 'circle';
+function parseParams() {
+  const p = new URLSearchParams(window.location.search);
+  frameNumber = int(p.get('frame') || 0);
+  frameSeed   = int(p.get('seed')  || frameNumber * 1000 + 1);
+  return p.has('style') ? int(p.get('style')) % 8 : null;
+}
 
-        const paletteParam = urlParams.get('palette');
-        if (paletteParam) {
-          try {
-            palette = JSON.parse(decodeURIComponent(paletteParam));
-          } catch (err) {
-            console.warn('Could not parse palette:', err);
-          }
-        }
+function computeDate() {
+  const today = new Date().toISOString().slice(0, 10);
+  dateSeed   = today.split('').reduce((s, c) => s + c.charCodeAt(0), 0);
+  styleIndex = dateSeed % 9;
+  H1         = dateSeed % 360;
+  H2         = (H1 + 110 + (dateSeed * 3) % 60) % 360;
+  H3         = (H1 + 220 + (dateSeed * 7) % 60) % 360;
+  darkMode   = (dateSeed % 4) !== 0;
+}
+
+function setup() {
+  createCanvas(1000, 1000);
+  colorMode(HSB, 360, 100, 100, 255);
+  noLoop();
+  const styleOverride = parseParams();
+  computeDate();
+  if (styleOverride !== null) styleIndex = styleOverride;
+}
+
+function draw() {
+  randomSeed(frameSeed);
+  noiseSeed(frameSeed);
+  [drawFlowField, drawMandala, drawFractalTree, drawLissajous,
+   drawLandscape, drawParticleSpiral, drawNeonWaves, drawAbstractBlobs,
+   drawWireframeArt
+  ][styleIndex]();
+}
+
+// Smooth closed blob via Catmull-Rom curveVertex
+function closedBlob(pts) {
+  const n = pts.length;
+  beginShape();
+  curveVertex(pts[n - 1].x, pts[n - 1].y);
+  for (const p of pts) curveVertex(p.x, p.y);
+  curveVertex(pts[0].x, pts[0].y);
+  curveVertex(pts[1].x, pts[1].y);
+  endShape();
+}
+
+// ── STYLE 0: FLOW FIELD ───────────────────────────────────────────────────────
+function drawFlowField() {
+  background(H1, darkMode ? 30 : 15, darkMode ? 7 : 94);
+  const t = frameNumber / 30;
+  strokeWeight(1.4);
+  noFill();
+
+  for (let i = 0; i < 360; i++) {
+    randomSeed(dateSeed * 3 + i * 19);
+    const sx = random(width), sy = random(height);
+    stroke((H1 + i * 0.85 + frameNumber * 4) % 360, 80, darkMode ? 90 : 72, 145);
+    beginShape();
+    let x = sx, y = sy;
+    for (let s = 0; s < 28; s++) {
+      vertex(x, y);
+      const a = noise(x * 0.0035, y * 0.0035, t * 0.6 + i * 0.008) * TWO_PI * 2.8;
+      x += cos(a) * 9;
+      y += sin(a) * 9;
+      if (x < -20 || x > width + 20 || y < -20 || y > height + 20) break;
+    }
+    endShape();
+  }
+
+  noStroke();
+  for (let i = 0; i < 14; i++) {
+    randomSeed(dateSeed + i * 37);
+    fill((H3 + i * 16) % 360, 70, 90, 75);
+    ellipse(random(100, 900), random(100, 900), random(36, 110));
+  }
+}
+
+// ── STYLE 1: MANDALA ──────────────────────────────────────────────────────────
+function drawMandala() {
+  background(H1, darkMode ? 22 : 10, darkMode ? 7 : 95);
+  push();
+  translate(width / 2, height / 2);
+
+  const sym  = 6 + (dateSeed % 7);
+  const rings = 6 + (dateSeed % 5);
+  const t    = (frameNumber / 30) * TWO_PI;
+
+  for (let ring = rings - 1; ring >= 0; ring--) {
+    const r   = map(ring, 0, rings - 1, 48, 468);
+    const n   = sym * (1 + ring % 3);
+    const dir = ring % 2 === 0 ? 1 : -1;
+    const rot = t * 0.25 * dir * (1 + ring * 0.15);
+
+    for (let i = 0; i < n; i++) {
+      push();
+      rotate((TWO_PI / n) * i + rot);
+      translate(r, 0);
+      rotate(((TWO_PI / n) * i + rot) * 2.5);
+
+      const h  = (H1 + ring * 28 + i * (180 / n)) % 360;
+      const sz = map(ring, 0, rings - 1, 12, 40);
+      fill(h, 68, darkMode ? 82 : 78, 200);
+      noStroke();
+
+      const mode = (ring + dateSeed) % 4;
+      if (mode === 0) {
+        ellipse(0, 0, sz * 1.8, sz * 0.8);
+      } else if (mode === 1) {
+        const sides = 3 + ring % 5;
+        beginShape();
+        for (let k = 0; k < sides; k++)
+          vertex(cos(TWO_PI * k / sides) * sz * 0.9, sin(TWO_PI * k / sides) * sz * 0.9);
+        endShape(CLOSE);
+      } else if (mode === 2) {
+        rectMode(CENTER); rect(0, 0, sz, sz, sz * 0.15);
+      } else {
+        quad(0, -sz, sz * 0.7, 0, 0, sz, -sz * 0.7, 0);
       }
 
-      function setup() {
-        createCanvas(1000, 1000);
-        noLoop();
-        parseParams();
+      fill(H3, 85, 95, 225);
+      ellipse(0, 0, sz * 0.22, sz * 0.22);
+      pop();
+    }
+  }
+
+  noFill();
+  for (let r = 0; r < 5; r++) {
+    stroke((H2 + r * 25) % 360, 55, darkMode ? 85 : 65, 180);
+    strokeWeight(1.2);
+    const d = (15 + r * 13) * 2;
+    ellipse(0, 0, d, d);
+  }
+  pop();
+}
+
+// ── STYLE 2: FRACTAL TREE ─────────────────────────────────────────────────────
+function drawFractalTree() {
+  background(H1, darkMode ? 18 : 10, darkMode ? 6 : 93);
+  const t    = (frameNumber / 30) * TWO_PI;
+  const wind = sin(t) * (0.1 + noise(dateSeed * 0.01) * 0.1);
+
+  noStroke();
+  fill((H1 + 115) % 360, 42, darkMode ? 18 : 52);
+  rect(0, height - 45, width, 45);
+
+  push();
+  translate(width / 2, height - 45);
+
+  const maxD  = 9 + (dateSeed % 3);
+  const trunk = 148 + (dateSeed % 72);
+
+  function branch(len, angle, d) {
+    if (d < 1 || len < 4) return;
+    const h  = map(d, 0, maxD, H2, H1) % 360;
+    const sw = constrain(map(d, 1, maxD, 0.7, 8.5), 0.7, 8.5);
+    stroke(h, 50 + d * 3, darkMode ? 42 + d * 4 : 38 + d * 5, 230);
+    strokeWeight(sw);
+    line(0, 0, cos(angle) * len, sin(angle) * len);
+
+    push();
+    translate(cos(angle) * len, sin(angle) * len);
+    const sp = 0.3  + noise(d * 0.4,  dateSeed * 0.005) * 0.27;
+    const lf = 0.62 + noise(d * 0.3,  dateSeed * 0.007) * 0.12;
+    const w  = wind / (d * 0.5 + 1);
+    branch(len * lf, angle - sp + w, d - 1);
+    branch(len * lf, angle + sp * 0.85 + w, d - 1);
+    if (d > 5 && dateSeed % 5 < 3) branch(len * lf * 0.6, angle + w * 0.5, d - 2);
+    pop();
+  }
+
+  branch(trunk, -HALF_PI, maxD);
+  pop();
+
+  noStroke();
+  randomSeed(dateSeed);
+  for (let i = 0; i < 110; i++) {
+    const bx  = random(50, 950);
+    const by  = random(height * 0.05, height * 0.78);
+    const sz  = random(3, 13);
+    const spd = random(0.5, 1.5);
+    const dx  = sin(t * spd + i) * 8;
+    const dy  = cos(t * spd * 0.75 + i) * 5;
+    fill((H3 + random(-25, 25) + 360) % 360, 76, 88, int(random(120, 210)));
+    ellipse(bx + dx, by + dy, sz, sz);
+  }
+}
+
+// ── STYLE 3: LISSAJOUS ────────────────────────────────────────────────────────
+function drawLissajous() {
+  background(H1, darkMode ? 18 : 8, darkMode ? 6 : 95);
+  const t  = (frameNumber / 30) * TWO_PI;
+  const cx = width / 2, cy = height / 2;
+
+  const ratios = [[2,3],[3,4],[3,5],[4,5],[5,6],[2,5],[3,7],[4,7]];
+  const [a, b] = ratios[dateSeed % ratios.length];
+  const scale  = 385 + (dateSeed % 30) * 2;
+  const nCurves = 3 + (dateSeed % 4);
+
+  for (let ci = 0; ci < nCurves; ci++) {
+    const ph = ci * (TWO_PI / nCurves);
+    const h  = (H1 + ci * (280 / nCurves)) % 360;
+    const sc = 1 - ci * 0.12;
+
+    for (let glow = 2; glow >= 0; glow--) {
+      stroke(h, 76, darkMode ? 88 + glow * 4 : 65, map(glow, 0, 2, 225, 85));
+      strokeWeight(map(glow, 0, 2, 2, 7));
+      noFill();
+      beginShape();
+      for (let theta = 0; theta <= TWO_PI * 2 + 0.05; theta += 0.015) {
+        vertex(cx + scale * sc * sin(a * theta + ph + t * 0.4),
+               cy + scale * sc * sin(b * theta + t * 0.3));
       }
+      endShape();
+    }
+  }
 
-      function draw() {
-        const today = new Date().toISOString().slice(0,10);
-        let daySeed = 0;
-        for (let i = 0; i < today.length; i++) {
-          daySeed += today.charCodeAt(i);
-        }
+  push();
+  translate(cx, cy);
+  rotate(t * 0.15);
+  noFill();
+  for (let i = 0; i < 5; i++) {
+    stroke((H2 + i * 40) % 360, 32, darkMode ? 62 : 48, 65);
+    strokeWeight(0.8);
+    const s = 460 - i * 74;
+    if (i % 2 === 0) rect(-s / 2, -s / 2, s, s);
+    else ellipse(0, 0, s, s);
+  }
+  pop();
+}
 
-        randomSeed(seed + daySeed);
-        noiseSeed(seed + daySeed);
-        background(palette.bg);
-        noStroke();
+// ── STYLE 4: LAYERED LANDSCAPE ───────────────────────────────────────────────
+function drawLandscape() {
+  const night = dateSeed % 3 !== 1;
+  const skyH  = night ? (H1 + 195) % 360 : H1;
 
-        const mainHue = (daySeed + frameNumber * 27) % 360;
-        const baseAlpha = 180;
-        const variant = shapeType;
+  noStroke();
+  for (let y = 0; y < height * 0.63; y++) {
+    const inter = y / (height * 0.63);
+    const h  = (skyH + inter * 18) % 360;
+    const s  = night ? 55 : 44;
+    const bv = night ? map(inter, 0, 1, 7, 22) : map(inter, 0, 1, 86, 66);
+    fill(h, s, bv);
+    rect(0, y, width, 1);
+  }
 
-        for (let i = 0; i < shapeCount; i++) {
-          const t = i / max(1, shapeCount - 1);
-          const x = noise(frameNumber * speed * 0.12 + i * 0.05) * width;
-          const y = noise(frameNumber * speed * 0.12 + i * 0.05 + 100) * height;
-          const size = map(noise(i * 0.2 + frameNumber * 0.03), 0, 1, 40, 260);
-          const sat = map(noise(i * 0.15 + frameNumber * 0.05), 0, 1, 55, 90);
-          const light = map(noise(i * 0.12 + frameNumber * 0.08), 0, 1, 35, 75);
-          const alpha = baseAlpha - i * (baseAlpha / max(1, shapeCount - 1));
-          const fillColor = color((mainHue + i * 18) % 360, sat, light, alpha);
-          fill(fillColor);
-          stroke(palette.accent);
-          strokeWeight(map(noise(i * 0.18 + frameNumber * 0.07), 0, 1, 1, 6));
+  if (night) {
+    randomSeed(dateSeed);
+    noStroke();
+    for (let i = 0; i < 140; i++) {
+      const twinkle = 0.5 + 0.5 * sin((frameNumber / 30) * TWO_PI * random(1, 3) + i);
+      fill(50, 8, 95, int(twinkle * 210));
+      ellipse(random(width), random(height * 0.6), random(0.5, 2.8));
+    }
+  }
 
-          push();
-          translate(x, y);
-          rotate(noise(i * 0.13 + frameNumber * 0.07) * TWO_PI);
+  const celX = width  * (0.18 + (dateSeed % 35) * 0.019);
+  const celY = height * (0.08 + (dateSeed % 22) * 0.009);
+  noStroke();
+  if (night) {
+    fill(50, 12, 93); ellipse(celX, celY, 76, 76);
+    fill(skyH, 55, 16); ellipse(celX + 13, celY - 10, 60, 60);
+  } else {
+    for (let r = 90; r > 0; r -= 8) {
+      fill(38, 76, 96, map(r, 0, 90, 255, 28));
+      ellipse(celX, celY, r * 2, r * 2);
+    }
+  }
 
-          if (variant === 'rect') {
-            rectMode(CENTER);
-            rect(0, 0, size * 1.2, size * 0.8, size * 0.2);
-          } else if (variant === 'triangle') {
-            triangle(
-              -size * 0.55,
-              size * 0.55,
-              0,
-              -size * 0.7,
-              size * 0.55,
-              size * 0.55
-            );
-          } else if (variant === 'line') {
-            strokeWeight(map(noise(i * 0.18 + frameNumber * 0.07), 0, 1, 2, 10));
-            line(-size * 0.8, 0, size * 0.8, 0);
-          } else if (variant === 'arc') {
-            arc(0, 0, size, size, 0, PI + QUARTER_PI, PIE);
-          } else {
-            ellipse(0, 0, size, size);
-          }
+  const numL = 4 + (dateSeed % 4);
+  for (let layer = numL - 1; layer >= 0; layer--) {
+    const yBase = map(layer, 0, numL - 1, height * 0.38, height * 0.73);
+    const h  = (H1 + layer * 22 + (night ? 175 : 0)) % 360;
+    const bv = night ? map(layer, 0, numL - 1, 10, 32)
+                     : map(layer, 0, numL - 1, 38, 60);
+    fill(h, night ? 40 : 52, bv);
+    noStroke();
+    beginShape();
+    vertex(0, height);
+    for (let x = 0; x <= width; x += 5) {
+      const nx  = x * 0.003 + layer * 2.8 + frameNumber * 0.005 * (layer + 1);
+      const yOff = noise(nx, layer * 1.8 + 8) * height * 0.28;
+      vertex(x, yBase - yOff);
+    }
+    vertex(width, height);
+    endShape(CLOSE);
+  }
 
-          pop();
-        }
+  fill((H1 + 120 + (night ? 180 : 0)) % 360, night ? 35 : 50, night ? 8 : 42);
+  noStroke();
+  rect(0, height * 0.88, width, height * 0.12);
+}
 
-        noStroke();
-        fill(palette.fill);
-        for (let j = 0; j < 6; j++) {
-          const cx = noise(frameNumber * 0.1 + j * 0.12) * width;
-          const cy = noise(frameNumber * 0.1 + j * 0.15 + 50) * height;
-          const radius = map(noise(j * 0.1 + frameNumber * 0.05), 0, 1, 25, 70);
-          ellipse(cx, cy, radius, radius);
-        }
+// ── STYLE 5: PARTICLE SPIRAL ─────────────────────────────────────────────────
+function drawParticleSpiral() {
+  background(H1, darkMode ? 22 : 12, darkMode ? 6 : 94);
+  const cx  = width / 2, cy = height / 2;
+  const PHI = (1 + sqrt(5)) / 2;
+  const t   = (frameNumber / 30) * TWO_PI;
+  const sp  = 11 + (dateSeed % 9);
+
+  noStroke();
+  for (let i = 0; i < 800; i++) {
+    const angle = i * PHI * TWO_PI + t;
+    const r     = sqrt(i) * sp;
+    if (r > 490) continue;
+
+    const h     = (H1 + i * 0.45 + frameNumber * 3) % 360;
+    const sz    = map(r, 0, 490, 15, 2.5);
+    const alpha = map(r, 0, 490, 230, 110);
+
+    fill(h, 78, darkMode ? 90 : 80, alpha);
+    ellipse(cx + cos(angle) * r, cy + sin(angle) * r, sz, sz);
+
+    if (i % 8 === 0) {
+      fill(H3, 85, 96, alpha * 0.7);
+      ellipse(cx + cos(angle) * r, cy + sin(angle) * r, sz * 0.4, sz * 0.4);
+    }
+  }
+
+  for (let r = 70; r > 0; r -= 6) {
+    fill(H2, 65, darkMode ? 95 : 85, map(r, 0, 70, 210, 15));
+    ellipse(cx, cy, r * 2, r * 2);
+  }
+}
+
+// ── STYLE 6: NEON WAVES ──────────────────────────────────────────────────────
+function drawNeonWaves() {
+  background(0, 0, 5);
+
+  stroke(H2, 25, 35, 32);
+  strokeWeight(0.5);
+  for (let x = 0; x < width;  x += 50) line(x, 0, x, height);
+  for (let y = 0; y < height; y += 50) line(0, y, width, y);
+
+  const t  = (frameNumber / 30) * TWO_PI;
+  const nw = 8 + (dateSeed % 8);
+
+  for (let w = 0; w < nw; w++) {
+    const h     = (H1 + w * (320 / nw)) % 360;
+    const yBase = map(w, 0, nw - 1, height * 0.08, height * 0.92);
+    const amp   = 28 + noise(w * 0.6, dateSeed * 0.01) * 100;
+    const freq  = 1 + (dateSeed * 3 + w * 11) % 5;
+    const phase = w * 0.9 + t;
+
+    for (let glow = 4; glow >= 0; glow--) {
+      stroke(h, map(glow, 0, 4, 88, 60), 90 + glow * 2, map(glow, 0, 4, 230, 45));
+      strokeWeight(map(glow, 0, 4, 2.5, 14));
+      noFill();
+      beginShape();
+      for (let x = 0; x <= width; x += 3) {
+        const noiseY = noise(x * 0.004 + w * 0.25, w * 0.18, t * 0.15) * amp * 0.5;
+        vertex(x, yBase + sin(x * 0.0055 * freq + phase) * amp + noiseY);
       }
-    </script>
-  </body>
+      endShape();
+    }
+  }
+
+  stroke(0, 0, 0, 18);
+  strokeWeight(1);
+  for (let y = 0; y < height; y += 3) line(0, y, width, y);
+}
+
+// ── STYLE 7: ABSTRACT BLOBS ──────────────────────────────────────────────────
+function drawAbstractBlobs() {
+  background(H1, darkMode ? 28 : 12, darkMode ? 7 : 94);
+  const t  = (frameNumber / 30) * TWO_PI;
+  const nb = 10 + (dateSeed % 12);
+
+  for (let i = 0; i < nb; i++) {
+    randomSeed(dateSeed + i * 43);
+    const bx    = random(width  * 0.12, width  * 0.88);
+    const by    = random(height * 0.12, height * 0.88);
+    const baseR = random(55, 225);
+    const h     = (H1 + i * (300 / nb) + random(-25, 25) + 360) % 360;
+    const spd   = random(0.25, 1.1) * (i % 2 === 0 ? 1 : -1);
+    const np    = 7 + int(random(7));
+    const dx    = sin(t * spd + i * 1.3) * 22;
+    const dy    = cos(t * spd * 0.75 + i * 0.9) * 16;
+
+    const pts = [];
+    for (let k = 0; k < np; k++) {
+      const angle = (TWO_PI / np) * k;
+      const wobble = 1 + 0.38 * sin(angle * 3 + t * spd + i);
+      pts.push({ x: bx + dx + cos(angle) * baseR * wobble,
+                 y: by + dy + sin(angle) * baseR * wobble });
+    }
+
+    fill(h, 62, darkMode ? 78 : 72, 145);
+    noStroke();
+    closedBlob(pts);
+  }
+
+  randomSeed(dateSeed + 999);
+  noStroke();
+  for (let i = 0; i < 55; i++) {
+    const sx  = random(width), sy = random(height), sz = random(2, 9);
+    const spd = random(0.6, 1.4);
+    fill((H3 + i * 7) % 360, 82, 95, int(random(130, 220)));
+    ellipse(sx + sin(t * spd + i) * 7, sy + cos(t * spd * 0.9 + i) * 5, sz, sz);
+  }
+}
+
+// ── STYLE 8: WIREFRAME ART ───────────────────────────────────────────────────
+function drawWireframeArt() {
+  background(H1, darkMode ? 15 : 5, darkMode ? 5 : 97);
+  const t = (frameNumber / 30) * TWO_PI;
+
+  // 3D helpers
+  function rotY(v, a) { return [v[0]*cos(a)+v[2]*sin(a), v[1], -v[0]*sin(a)+v[2]*cos(a)]; }
+  function rotX(v, a) { return [v[0], v[1]*cos(a)-v[2]*sin(a), v[1]*sin(a)+v[2]*cos(a)]; }
+  function proj(v, ox, oy) {
+    const d = 800, z = max(v[2] + d, 1);
+    return [ox + v[0]*(d/z), oy - v[1]*(d/z)];
+  }
+  function edge(v1, v2, ox, oy, ra, ta, h, alpha, sw) {
+    const r1 = rotX(rotY(v1, ra), ta), r2 = rotX(rotY(v2, ra), ta);
+    const p1 = proj(r1, ox, oy),       p2 = proj(r2, ox, oy);
+    if (abs(p1[0]) > width*3 || abs(p1[1]) > height*3) return;
+    if (abs(p2[0]) > width*3 || abs(p2[1]) > height*3) return;
+    stroke(h % 360, 70, darkMode ? 88 : 18, alpha);
+    strokeWeight(sw || 1.2);
+    line(p1[0], p1[1], p2[0], p2[1]);
+  }
+
+  // Vanishing-point perspective lines in the background
+  const numVP = 2 + (dateSeed % 2);
+  for (let vpi = 0; vpi < numVP; vpi++) {
+    randomSeed(dateSeed + vpi * 111);
+    const vpx = random(width * 0.1, width * 0.9);
+    const vpy = random(height * 0.1, height * 0.9);
+    const nLines = 18 + (dateSeed % 18);
+    for (let i = 0; i < nLines; i++) {
+      randomSeed(dateSeed + vpi * 300 + i * 17);
+      const angle = random(TWO_PI);
+      const len   = (width + height) * 0.95;
+      const h     = (H1 + vpi * 130 + i * (220 / nLines)) % 360;
+      const alpha = darkMode ? map(i, 0, nLines, 150, 50) : map(i, 0, nLines, 110, 30);
+      stroke(h, 65, darkMode ? 80 : 20, alpha);
+      strokeWeight(0.6 + (i % 5) * 0.25);
+      noFill();
+      line(vpx, vpy, vpx + cos(angle)*len, vpy + sin(angle)*len);
+    }
+  }
+
+  // 3D wireframe shape: 0=pyramid  1=cube  2=prism
+  const shapeType = dateSeed % 3;
+  const ox  = width  * (0.38 + (dateSeed % 25) * 0.01);
+  const oy  = height * (0.48 + (dateSeed % 15) * 0.01);
+  const sz  = 155 + (dateSeed % 90);
+  const ra  = t;                                 // rotation around Y
+  const ta  = sin(t * 0.55) * 0.3 + (dateSeed % 8) * 0.04; // tilt
+
+  noFill();
+
+  if (shapeType === 0) {
+    // Pyramid — square base + apex + horizontal slice rings
+    const base = [[ sz,0, sz],[-sz,0, sz],[-sz,0,-sz],[ sz,0,-sz]];
+    const apex = [0, sz * 1.65, 0];
+    for (let i = 0; i < 4; i++) edge(base[i], base[(i+1)%4], ox, oy, ra, ta, H1, 210, 1.5);
+    for (const b of base)       edge(b, apex,               ox, oy, ra, ta, H2, 210, 1.5);
+    const slices = 18;
+    for (let s = 1; s < slices; s++) {
+      const ratio = s / slices;
+      const hs = sz * ratio;
+      const ys = apex[1] * (1 - ratio);
+      const ring = [[hs,ys,hs],[-hs,ys,hs],[-hs,ys,-hs],[hs,ys,-hs]];
+      const h = (H1 + s * (200/slices)) % 360;
+      const a = map(s, 0, slices, 70, 190);
+      for (let i = 0; i < 4; i++) edge(ring[i], ring[(i+1)%4], ox, oy, ra, ta, h, a, 0.9);
+    }
+
+  } else if (shapeType === 1) {
+    // Cube with face grid lines
+    const v = [
+      [ sz, sz, sz],[-sz, sz, sz],[-sz,-sz, sz],[ sz,-sz, sz],
+      [ sz, sz,-sz],[-sz, sz,-sz],[-sz,-sz,-sz],[ sz,-sz,-sz]
+    ];
+    const edges = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+    for (const [a, b] of edges) {
+      const h = (H1 + map(v[a][2]+v[b][2], -sz*2, sz*2, 0, 120)) % 360;
+      edge(v[a], v[b], ox, oy, ra, ta, h, 220, 1.5);
+    }
+    const divs = 7;
+    for (let d = 1; d < divs; d++) {
+      const s = map(d, 0, divs, -sz, sz);
+      const h = (H2 + d * 20) % 360;
+      const al = 100;
+      edge([sz,s,sz],[-sz,s,sz], ox,oy,ra,ta,h,al,0.8);
+      edge([sz,s,-sz],[-sz,s,-sz], ox,oy,ra,ta,h,al,0.8);
+      edge([s,sz,sz],[s,-sz,sz], ox,oy,ra,ta,H3,al,0.8);
+      edge([s,sz,-sz],[s,-sz,-sz], ox,oy,ra,ta,H3,al,0.8);
+      edge([sz,sz,s],[-sz,sz,s], ox,oy,ra,ta,h,al,0.8);
+      edge([sz,-sz,s],[-sz,-sz,s], ox,oy,ra,ta,H3,al,0.8);
+    }
+
+  } else {
+    // Triangular prism + depth slices
+    const depth = sz * 1.6;
+    const v = [
+      [ sz,0,0],[-sz,0,0],[0,sz*1.6,0],
+      [ sz,0,-depth],[-sz,0,-depth],[0,sz*1.6,-depth]
+    ];
+    const edges = [[0,1],[1,2],[2,0],[3,4],[4,5],[5,3],[0,3],[1,4],[2,5]];
+    for (const [a, b] of edges) edge(v[a],v[b], ox,oy,ra,ta, H1,220,1.5);
+    const slices = 16;
+    for (let s = 1; s < slices; s++) {
+      const z = map(s, 0, slices, 0, -depth);
+      const ring = [[sz,0,z],[-sz,0,z],[0,sz*1.6,z]];
+      const h = (H2 + s * (180/slices)) % 360;
+      const a = map(s, 0, slices, 80, 170);
+      for (let i = 0; i < 3; i++) edge(ring[i], ring[(i+1)%3], ox,oy,ra,ta,h,a,0.85);
+    }
+  }
+}
+</script>
+</body>
 </html>

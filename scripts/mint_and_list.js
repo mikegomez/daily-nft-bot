@@ -1,4 +1,3 @@
-//require('dotenv').config();
 if (process.env.GITHUB_ACTIONS !== 'true') {
   require('dotenv').config();
 }
@@ -56,13 +55,8 @@ async function main() {
   const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, wallet);
 
   // IPFS URL (replace daily if automated)
-   const ipfsHash = await uploadTodayGif();   // ← uploads + returns new CID
+   const ipfsHash = await uploadTodayGif();
   const tokenURI = `ipfs://${ipfsHash}`;
-  // const ipfsHash = 'QmcWmhZzC44Wh9HRbngFtUu3UH7Z9EEGe482fcpm2jxgLr';
-  // const tokenURI = `ipfs://${ipfsHash}`;
-
-// const ipfsHash = fs.readFileSync('latest_cid.txt', 'utf8').trim();
-// const tokenURI = `ipfs://${ipfsHash}`;
 
   // Call safeMint
   console.log('Minting NFT...');
