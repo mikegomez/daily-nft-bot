@@ -50,6 +50,10 @@ module.exports = { uploadTodayGif };
 
 if (require.main === module) {
   uploadTodayGif()
-    .then(() => process.exit(0))
+    .then(hash => {
+      fs.writeFileSync(path.join(__dirname, 'latest_cid.txt'), hash);
+      console.log('CID written to latest_cid.txt');
+      process.exit(0);
+    })
     .catch(() => process.exit(1));
 }

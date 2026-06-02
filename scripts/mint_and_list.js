@@ -1,8 +1,9 @@
 if (process.env.GITHUB_ACTIONS !== 'true') {
   require('dotenv').config();
 }
+const fs = require('fs');
+const path = require('path');
 const { ethers } = require('ethers');
-const { uploadTodayGif } = require('../upload_to_pinata.js');
 
 // Debug environment variables
 console.log('=== Environment Debug ===');
@@ -54,8 +55,12 @@ async function main() {
   const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
   const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, wallet);
 
-  // IPFS URL (replace daily if automated)
-   const ipfsHash = await uploadTodayGif();
+  const cidFile = path.join(__dirname, '..', 'latest_cid.txt');
+  if (!fs.existsSync(cidFile)) {
+    console.error('❌ latest_cid.txt not found — run upload_to_pinata.js first');
+    process.exit(1);
+  }
+  const ipfsHash = fs.readFileSync(cidFile, 'utf8').trim();
   const tokenURI = `ipfs://${ipfsHash}`;
 
   // Call safeMint
