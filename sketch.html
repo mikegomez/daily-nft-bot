@@ -18,7 +18,7 @@ function parseParams() {
   const p = new URLSearchParams(window.location.search);
   frameNumber = int(p.get('frame') || 0);
   frameSeed   = int(p.get('seed')  || frameNumber * 1000 + 1);
-  return p.has('style') ? int(p.get('style')) % 8 : null;
+  return p.has('style') ? int(p.get('style')) % 9 : null;
 }
 
 function computeDate() {

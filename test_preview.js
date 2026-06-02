@@ -1,6 +1,6 @@
-// Generates one PNG preview per style (0-7) so you can see what each looks like.
+// Generates one PNG preview per style (0-8) so you can see what each looks like.
 // Run: node test_preview.js
-// Output: art/preview-style-0.png through art/preview-style-7.png
+// Output: art/preview-style-0.png through art/preview-style-8.png
 
 const puppeteer = require('puppeteer');
 const fs = require('fs');
@@ -43,5 +43,5 @@ const STYLE_NAMES = [
   }
 
   await browser.close();
-  console.log('\n✨ All 8 style previews saved to art/');
+  console.log('\n✨ All 9 style previews saved to art/');
 })();
