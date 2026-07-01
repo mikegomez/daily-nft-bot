@@ -5,6 +5,7 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
+const { createImageSeed } = require('./lib/image_seed');
 
 const STYLE_NAMES = [
   'flow-field',
@@ -26,11 +27,13 @@ const STYLE_NAMES = [
   const page = await browser.newPage();
   await page.setViewport({ width: 1000, height: 1000 });
 
+  const today = new Date().toISOString().slice(0, 10);
+
   for (let style = 0; style < 9; style++) {
     const name = STYLE_NAMES[style];
     console.log(`🎨 Generating style ${style}: ${name}...`);
 
-    const seed = Math.floor(Math.random() * 90000) + 10000;
+    const seed = createImageSeed({ date: today, frameNumber: 15, style, salt: `preview-${name}`, randomize: true });
     const url = `file://${path.join(__dirname, 'sketch.html')}?frame=15&seed=${seed}&style=${style}`;
 
     await page.goto(url);

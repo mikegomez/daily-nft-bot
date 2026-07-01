@@ -21,6 +21,7 @@
     "gifencoder": "^2.0.1",
     "mime": "^4.1.0",
     "nft.storage": "^7.2.0",
+    "p5": "^2.3.0",
     "puppeteer": "^24.42.0"
   },
   "devDependencies": {

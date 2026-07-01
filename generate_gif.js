@@ -3,6 +3,7 @@ const GIFEncoder = require('gifencoder');
 const fs = require('fs');
 const { createCanvas, loadImage } = require('canvas');
 const path = require('path');
+const { createImageSeed } = require('./lib/image_seed');
 
 function randomPalette(dateSeed) {
   const hue = (dateSeed % 360) || Math.floor(Math.random() * 360);
@@ -20,7 +21,7 @@ function randomPalette(dateSeed) {
   const delay = 90;
 
   const today = new Date().toISOString().slice(0,10);
-  const dateSeed = today.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  const dateSeed = createImageSeed({ date: today, frameNumber: 0, style: 0, salt: 'palette' });
   const palette = randomPalette(dateSeed);
   const outputDir = path.join(__dirname, 'art');
   const filename = `${today}.gif`;
@@ -47,7 +48,7 @@ function randomPalette(dateSeed) {
     const speed = (Math.random() * 0.7 + 0.3).toFixed(2);
     const shapeCount = Math.floor(Math.random() * 12) + 8;
     const shapeType = ['circle', 'rect', 'triangle', 'line', 'arc'][Math.floor(Math.random() * 5)];
-    const shapeSeed = dateSeed + frameNumber * 17 + Math.floor(Math.random() * 1000);
+    const shapeSeed = createImageSeed({ date: today, frameNumber, style: frameNumber % 9, salt: `${shapeType}-${shapeCount}-${speed}`, randomize: true });
     const query = new URLSearchParams({
       frame: frameNumber,
       seed: shapeSeed,

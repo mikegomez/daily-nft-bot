@@ -17,8 +17,10 @@ let H1, H2, H3, darkMode;
 function parseParams() {
   const p = new URLSearchParams(window.location.search);
   frameNumber = int(p.get('frame') || 0);
-  frameSeed   = int(p.get('seed')  || frameNumber * 1000 + 1);
-  return p.has('style') ? int(p.get('style')) % 9 : null;
+  frameSeed   = int(p.get('seed') || frameNumber * 1000 + 1);
+  const styleOverride = p.has('style') ? int(p.get('style')) % 9 : null;
+  if (styleOverride !== null) styleIndex = styleOverride;
+  return styleOverride;
 }
 
 function computeDate() {
@@ -38,6 +40,8 @@ function setup() {
   const styleOverride = parseParams();
   computeDate();
   if (styleOverride !== null) styleIndex = styleOverride;
+  randomSeed(frameSeed);
+  noiseSeed(frameSeed);
 }
 
 function draw() {
