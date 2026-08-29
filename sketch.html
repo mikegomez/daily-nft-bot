@@ -25,7 +25,7 @@ function parseParams() {
 
 function computeDate() {
   const today = new Date().toISOString().slice(0, 10);
-  dateSeed   = today.split('').reduce((s, c) => s + c.charCodeAt(0), 0);
+  dateSeed   = Math.floor(Date.parse(today) / 86400000);
   styleIndex = dateSeed % 9;
   H1         = dateSeed % 360;
   H2         = (H1 + 110 + (dateSeed * 3) % 60) % 360;
